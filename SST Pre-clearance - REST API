@@ -1,0 +1,1138 @@
+FORMAT: 1A
+HOST: https://dev.easymundi.com/
+
+# SST Pre-clearance - REST API
+This API documentation</strong> defines and specifies the technical criteria necessary for the integration of a client that wishes to use SST Pre-clearance API, and it is designed to be used along with the 
+<strong>SST Pre-clearance Manual</strong>, which can be requested at: integration-support@sinerlog.global
+
+<!-- ![name](http://sinerlogusa.com/downloads/LogosSinerlogSST.jpeg) -->
+
+<!--# Flowchart Warehouse x Sinerlog
+In the flow below, it is demonstrated, in a simplified way, an operational flow of a warehouse, as well as, which API should be called at each stage of the operational flow
+![name](http://sinerlogusa.com/downloads/CompleteFlow.jpg) -->
+
+SST Pre-clearance API follows REST principles, so the API is stateless and http methods and response codes are used whenever possible.
+<br><br>The base url for requests using the <strong>HOMOLOGATION</strong> (test) environment is: `https://dev.easymundi.com/`
+<br><br>Access and credentials for the <strong>PRODUCTION</strong> environment will be provided once the integration is finished, tested and approved by Sinerlog using the <strong>HOMOLOGATION</strong> environment.
+
+# Description of server success responses
+- 200 `OK` - the request was successful.
+- 201 `Created` - the request was successful and a resource was created.
+- 204 `No Content` - the request was successful but there is no return body (i.e. empty response).
+
+# Description of server error responses
+- 400 `Bad Request` - The request could not be correctly interpreted or was missing required parameters.
+- 401 `Unauthorized` - Authentication process failed or the user doesn't have the required permissions for the requested.
+- 404 `Not Found` - Resource was not found.
+- 405 `Method Not Allowed` - Requested method is not supported for resource.
+- 422 `Unprocessable Entity` - Request body contains correctly structured, but semantically incorrect json parameters.
+- 500 `Internal server error` - Unexpected error. if this status code is returned, please contact: integration-support@sinerlog.global
+
+# Authentication
+
+Every request must contain the Bearer Token in it's header. 
+
+## OAuth Token exchange [/oauth/token]
+Exchange credentials for the `access_token`.
+
+<!--+ `password`-->
+<!--+ [`urn:ietf:params:oauth:grant-type:jwt-bearer`](https://tools.ietf.org/html/draft-jones-oauth-jwt-bearer-03#section-6)-->
+
+### Exchange credentials for token [POST /oauth/token]
+
+This method is used to exchange the credentials provided by Sinerlog the Bearer Token needed on the header of every request.
+<br>`access_token` = Bearer Token
+
++ Request (application/json)
+    
+    + Body
+    
+            {
+                "grant_type": "password",
+                "client_id": "1",
+                "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "username": "example.apiary.update.25.05@sinerlog.com",
+                "password": "xxxxxxxx",
+                "scope": "*"
+            }
+
++ Response 200 (application/json)
+    
+            {
+                "token_type": "Bearer",
+                "expires_in": 31536000,
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...",
+                "refresh_token": "def502007d6fd7f7859df9982bef2ccc055bd93be7ba445cava..."
+            }
+
+## Order [/api/orders]
+
+### CREATE ORDER [POST /api/orders]
+
+This method is used to create a new order (aka parcel). The information will be validated according to the parameters allowed for each field.
+
+Special attention is needed on the following fields:
+- `Shipping Adress Zip Code`: It will be verified if the ZIP Code is valid in Brazil.
+- `CustomerDocument`: It will be verified if the document is valid in Brazil.
+- `Length`, `Height`, `Wight` : The sum of the measurements of these fields may not exceed 200 cm.
+- `DeliveryType`: `ST` for Standard Modal Last Mile, `EX` for Express Modal Last Mile
+- `DeliveryTax`: `1` for DDP or `2` for DDU.
+
++ Attributes
+    + description: Musical Instrument (string, required) - max.lenght (50)
+    + orderNumber: ORD0001 (string, required) - Can't be reused
+    + externalId: External Tracking Number (string, optional)
+    + weight: 700 (number, required) - in grams (min: 1 | max: 30000)
+    + height: 15 (number, required) - in centimeters (min: 1 | max: 100)
+    + width: 15 (number, required) - in centimeters (min: 14 | max: 100)
+    + length: 20 (number, required) - in centimeters (min: 9 | max: 100)
+    + classification: regular (enum, required)
+     + Members
+        + regular
+    + totalAmount: 56.90 (number, required) - Max: $3,000.00 or equivalent in BRL or EUR
+    + currency: USD (string, required) - USD, BRL or EUR
+    + deliveryType: ST (string, required) - ST or EX
+    + deliveryTax: 2 (number, required) - 1 for DDP or 2 for DDU
+    + seller
+        + name: Phillip Freeman (string, required) - maxlength (70)
+        + document: 200328451 (string, optional)
+        + email: philliplfreeman@armyspy.com (string, optional) - maxlength (50)
+        + phone: 17248917069 (string, optional)  -  maxlength (15)
+        + address
+            + street: Spruce Drive (string, optional) - maxlength (90)
+            + street2: "" (string, optional)  - maxlength (50)
+            + number: 10 (number, optional)  - maxlength (10)
+            + complement: "" (string, optional) - maxlength (50)
+            + city: Beaver Falls (string, optional) - maxlength (50)
+            + province: PA (string, optional) - maxlength (30)
+            + zipcode: 15010 (string, optional)  - maxlength (20)
+    + customer
+        + name: Gabriel Martins (string, required) - maxlength (70)
+        + document: 52947139933 (string , required) - Must contain 11 or 14 digits
+        + email: gabrieloliveiramartins@cuvox.de (string, required) - maxlength (50)
+        + phone: 553154628977 (string) - maxlength (15)
+    + shippingAddress
+        + street: Praça Salgado Filho (string, required) - maxlength (110)
+        + street2: "" (string, optional) - maxlength (50)
+        + number: 1308 (string, required) - maxlength (10)
+        + complement: apto 16 (string, optional) - maxlength (50)
+        + city: Rio de Janeiro (string, required) - maxlength (100)
+        + province: RJ (string, required) - maxlength (2)
+        + zipcode: 22775-120 (string, required) - maxlength (9)
+    + products[]
+        + code: "0001" (string, required)
+        + sh_code: 851690 (number, required)
+        + name: Drum (string, required)  - maxlength (200)
+        + value: 56.90 (number, required) - (min: $0.01 | max: $3,000.00)
+        + qty: 1 (string, required)
+        + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+              "description": "Products",
+              "orderNumber": "ORD0001",
+              "externalId": "ExternalTrackingNumber",
+              "weight": 700,
+              "height": 15,
+              "width": 15,
+              "length": 20,
+              "classification": "regular",
+              "totalAmount": "56.90",
+              "currency": "USD",
+              "deliveryType": "ST",
+              "deliveryTax": 2,
+              "seller": {
+                "name": "Phillip Freeman",
+                "document": "200328451",
+                "email": "philliplfreeman@client.com",
+                "phone": "17248917069",
+                "address": {
+                  "street": "Spruce Drive",
+                  "street2": "",
+                  "number": "2025",
+                  "complement": "",
+                  "city": "Beaver Falls",
+                  "province": "PA",
+                  "zipcode": "15010"
+                }
+              },
+              "customer": {
+                "name": "Gabriel Martins",
+                "document": "52947139933",
+                "email": "gabrieloliveiramartins@cuvox.de",
+                "phone": "553154628977"
+              },
+              "shippingAddress": {
+                "street": "Praça Salgado Filho",
+                "street2": "",
+                "number": "1308",
+                "complement": "apto 167",
+                "city": "Rio de Janeiro",
+                "province": "RJ",
+                "zipcode": "22775-120"
+              },
+              "products": [
+                {
+                  "code": "0001",
+                  "sh_code": 851690,
+                  "name": "Drum",
+                  "value": "56.90",
+                  "qty": "1",
+                  "photoBase64": "/9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9..."
+                }
+              ]
+            }
+            
++ Response 201 (application/json)
+
+            {
+                "data": {
+                    "order_code": "SST2022052561915",
+                    "status": "created",
+                    "tracking_code": "NX004847162BR",
+                    "process_code": "x",
+                    "contract_number": "9912550122",
+                    "nationalization_status": "Retorno à origem",
+                    "country_origin": "US",
+                    "data": {
+                        "id": 61915,
+                        "orderNumber": "ORD0001",
+                        "total": "56.90",
+                        "delivery_type": "ST",
+                        "service_type": "DDU",
+                        "stp": false,
+                        "spos": 0,
+                        "freight_price": "1.40",
+                        "classification": "regular",
+                        "description": "Products",
+                        "currency": "USD",
+                        "width": 15,
+                        "height": 15,
+                        "length": 20,
+                        "url": "",
+                        "weight": "700.00",
+                        "gross_weight": "700.00",
+                        "volume_weight": "751.50",
+                        "considered_weight": "1000.00",
+                        "bag_code": null,
+                        "bag_id": null,
+                        "flight_mawb": null,
+                        "flight_id": null,
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "insurance_price": 0,
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:56:00",
+                        "cost": "0.0000",
+                        "CIF": 58.3,
+                        "exchangeRate": 1
+                    },
+                    "customer": {
+                        "id": 62353,
+                        "document": "52947139933",
+                        "document_type": null,
+                        "full_name": "Gabriel Martins",
+                        "email": "gabrieloliveiramartins@cuvox.de",
+                        "phone_number": "553154628977",
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:56:00",
+                        "shippingAddress": {
+                            "address": "Praça Salgado Filho",
+                            "neighborhood": "",
+                            "complement": "apto 167",
+                            "number": "1308",
+                            "city": "Rio de Janeiro",
+                            "province": "RJ",
+                            "zipcode": "22775120",
+                            "observation": "Praça Salgado Filho, 1308, , apto 167, Rio de Janeiro - RJ, 22775-120"
+                        }
+                    },
+                    "seller": {
+                        "address": {
+                            "address": "Spruce Drive",
+                            "neighborhood": "",
+                            "complement": "",
+                            "number": "2025",
+                            "city": "Beaver Falls",
+                            "province": "PA",
+                            "zipcode": "15010",
+                            "observation": ""
+                        },
+                        "id": 61578,
+                        "code": "ESY2022052561578",
+                        "name": "Phillip Freeman",
+                        "document": "200328451",
+                        "email": "philliplfreeman@client.com",
+                        "phone": "17248917069"
+                    },
+                    "products": [
+                        {
+                            "id": 65934,
+                            "name": "Drum",
+                            "origin_code": "0001",
+                            "hs_code": 851690,
+                            "value": "56.9000",
+                            "qty": 1,
+                            "insurance": false,
+                            "insurance_value": null
+                        }
+                    ],
+                    "history": [
+                        {
+                            "description": "Pedido recebido",
+                            "date": "2022-05-25T23:56:00.000000Z"
+                        }
+                    ],
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+### UPDATE ORDER [PUT /api/orders/{tracking_code}]
+
+This method is used for update created order.
+
++ Parameters
+    + tracking_code: NX004847162BR (string, required)
+
++ Attributes
+    + description: Musical Instrument (string, required) - max.lenght (50)
+    + orderNumber: ORD0001 (string, required) - Can´t be reused
+    + externalId: External Tracking Number (string, optional)
+    + weight: 700 (number, required) - in grams (min: 1 | max: 30000)
+    + height: 15 (number, required) - in centimeters (min: 1 | max: 100)
+    + width: 15 (number, required) - in centimeters (min: 14 | max: 100)
+    + length: 20 (number, required) - in centimeters (min: 9 | max: 100)
+    + classification: regular (enum, required)
+     + Members
+        + regular
+    + totalAmount: 56.90 (number, required) - Max: $3,000.00 or equivalent in BRL or EUR
+    + currency: USD (string, required) - USD, BRL or EUR
+    + deliveryType: ST (string, required) - ST or EX
+    + deliveryTax: 2 (number, required) - 1 for DDP or 2 for DDU
+    + seller
+        + name: Phillip Freeman (string, required) - maxlength (70)
+        + document: 200328451 (string, optional)
+        + email: philliplfreeman@armyspy.com (string, optional) - maxlength (50)
+        + phone: 17248917069 (string, optional)  -  maxlength (15)
+        + address
+            + street: Spruce Drive (string, optional) - maxlength (90)
+            + street2: "" (string, optional)  - maxlength (50)
+            + number: 10 (number, optional)  - maxlength (10)
+            + complement: "" (string, optional) - maxlength (50)
+            + city: Beaver Falls (string, optional) - maxlength (50)
+            + province: PA (string, optional) - maxlength (30)
+            + zipcode: 15010 (string, optional)  - maxlength (20)
+    + customer
+        + name: Gabriel Martins (string, required) - maxlength (70)
+        + document: 52947139933 (string , required) - Must contain 11 or 14 digits
+        + email: gabrieloliveiramartins@cuvox.de (string, required) - maxlength (50)
+        + phone: 553154628977 (string) - maxlength (15)
+    + shippingAddress
+        + street: Praça Salgado Filho (string, required) - maxlength (110)
+        + street2: "" (string, optional) - maxlength (50)
+        + number: 1308 (string, required) - maxlength (10)
+        + complement: apto 16 (string, optional) - maxlength (50)
+        + city: Rio de Janeiro (string, required) - maxlength (100)
+        + province: RJ (string, required) - maxlength (2)
+        + zipcode: 22775-120 (string, required) - maxlength (9)
+    + products[]
+        + code: "0001" (string, required)
+        + sh_code: 851690 (number, required)
+        + name: Drum (string, required)  - maxlength (200)
+        + value: 56.90 (number, required) - (min: $0.01 | max: $3,000.00)
+        + qty: 1 (string, required)
+        + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+              "description": "Products",
+              "orderNumber": "ORD0001",
+              "externalId": "ExternalTrackingNumber",
+              "weight": 700,
+              "height": 15,
+              "width": 15,
+              "length": 20,
+              "classification": "regular",
+              "totalAmount": "56.90",
+              "currency": "USD",
+              "deliveryType": "ST",
+              "deliveryTax": 2,
+              "seller": {
+                "name": "Phillip Freeman",
+                "document": "200328451",
+                "email": "philliplfreeman@client.com",
+                "phone": "17248917069",
+                "address": {
+                  "street": "Spruce Drive",
+                  "street2": "",
+                  "number": "2025",
+                  "complement": "",
+                  "city": "Beaver Falls",
+                  "province": "PA",
+                  "zipcode": "15010"
+                }
+              },
+              "customer": {
+                "name": "Gabriel Martins",
+                "document": "52947139933",
+                "email": "gabrieloliveiramartins@cuvox.de",
+                "phone": "553154628977"
+              },
+              "shippingAddress": {
+                "street": "Praça Salgado Filho",
+                "street2": "",
+                "number": "1308",
+                "complement": "apto 167",
+                "city": "Rio de Janeiro",
+                "province": "RJ",
+                "zipcode": "22775-120"
+              },
+              "products": [
+                {
+                  "code": "0001",
+                  "sh_code": 851690,
+                  "name": "Drum",
+                  "value": "56.90",
+                  "qty": "1",
+                  "photoBase64": "/9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9..."
+                }
+              ]
+            }
+            
++ Response 201 (application/json)
+
+            {
+                "data": {
+                    "order_code": "SST2022052561915",
+                    "status": "created",
+                    "tracking_code": "NX004847162BR",
+                    "process_code": "x",
+                    "contract_number": "9912550122",
+                    "nationalization_status": "Retorno à origem",
+                    "country_origin": "US",
+                    "data": {
+                        "id": 61915,
+                        "orderNumber": "ORD0001",
+                        "total": "56.90",
+                        "delivery_type": "ST",
+                        "service_type": "DDU",
+                        "stp": 0,
+                        "spos": 0,
+                        "freight_price": "1.40",
+                        "classification": "regular",
+                        "description": "Products",
+                        "currency": "USD",
+                        "width": "15.00",
+                        "height": "15.00",
+                        "length": "20.00",
+                        "url": "",
+                        "weight": "700.00",
+                        "gross_weight": "700.00",
+                        "volume_weight": "751.50",
+                        "considered_weight": "1000.00",
+                        "bag_code": null,
+                        "bag_id": null,
+                        "flight_mawb": null,
+                        "flight_id": null,
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "insurance_price": 0,
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:58:15",
+                        "cost": "0.0000",
+                        "CIF": "58.30",
+                        "exchangeRate": "1.0000"
+                    },
+                    "customer": {
+                        "id": 62353,
+                        "document": "52947139933",
+                        "document_type": null,
+                        "full_name": "Gabriel Martins",
+                        "email": "gabrieloliveiramartins@cuvox.de",
+                        "phone_number": "553154628977",
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:56:00",
+                        "shippingAddress": {
+                            "address": "Praça Salgado Filho",
+                            "neighborhood": "-",
+                            "complement": "apto 167",
+                            "number": "1308",
+                            "city": "Rio de Janeiro",
+                            "province": "RJ",
+                            "zipcode": "22775120",
+                            "observation": "Praça Salgado Filho, 1308, , apto 167, Rio de Janeiro - RJ, 22775-120"
+                        }
+                    },
+                    "seller": {
+                        "address": {
+                            "address": "Spruce Drive",
+                            "neighborhood": "",
+                            "complement": "",
+                            "number": "2025",
+                            "city": "Beaver Falls",
+                            "province": "PA",
+                            "zipcode": "15010",
+                            "observation": ""
+                        },
+                        "id": 61578,
+                        "code": "ESY2022052561578",
+                        "name": "Phillip Freeman",
+                        "document": "200328451",
+                        "email": "philliplfreeman@client.com",
+                        "phone": "17248917069"
+                    },
+                    "products": [
+                        {
+                            "id": 65934,
+                            "name": "Drum",
+                            "origin_code": "0001",
+                            "hs_code": 851690,
+                            "value": "56.9000",
+                            "qty": 1,
+                            "insurance": false,
+                            "insurance_value": null
+                        }
+                    ],
+                    "history": [
+                        {
+                            "description": "Pedido recebido",
+                            "date": "2022-05-25T23:56:00.000000Z"
+                        }
+                    ],
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+
+
+### GET CN23 [GET /api/orders/cn23/{tracking_code}]
+This method returns the URL for downloading the CN23 order label, in .pdf format.
+
++ Parameters
+    + tracking_code: NX004847162BR (string, required)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn23/NX004847176BR.pdf"
+                }
+            }
+
+
+### GET ORDER LABEL INFORMATION [GET /api/orders/label{?tracking_code}]
+
+This method is used to retrieve only the necessary information for generating a CN23 order label template. 
+This can be used if a client disires to generate it's own CN23 order label template, instead of using the labels provided by the <strong>GET CN23</strong> method call.
+<br>All of the information provided in this call are also returned on the return body of the <strong>CREATE ORDER</strong> method, whenever an order is successfully created, and can also 
+be accessed by calling the <strong>CONSULT ORDER</strong> method.
+
++ Parameters
+    + tracking_code: NX004847162BR (string, optional)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+ 
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "tracking_number": "NX004847162BR",
+                    "process_code": "x",
+                    "contract_number": "9912550122",
+                    "nationalization_status": "Retorno à origem",
+                    "country_origin": "US",
+                    "service_type": "Standard",
+                    "return": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                    "freight_price": "1.40",
+                    "insurance_value": "0.00",
+                    "weight": "700.000",
+                    "total": "58.30",
+                    "service": 2,
+                    "products": [
+                        {
+                            "sh_code": 851690,
+                            "qty": 1,
+                            "description": "Drum",
+                            "unit_value": "56.9000",
+                            "line_value": 56.9
+                        }
+                    ],
+                    "customer": {
+                        "name": "Gabriel Martins",
+                        "document": "52947139933",
+                        "email": "gabrieloliveiramartins@cuvox.de",
+                        "phone": "553154628977",
+                        "address": "Praça Salgado Filho, 1308, -, apto 167",
+                        "city": "Rio de Janeiro",
+                        "state": "RJ",
+                        "country": "Brazil",
+                        "zipcode": "22775120"
+                    },
+                    "seller": {
+                        "address": "Spruce Drive",
+                        "city": "Beaver Falls",
+                        "country": "",
+                        "zipcode": "15010",
+                        "name": "Phillip Freeman"
+                    }
+                }
+            }
+
+### CONSULT ORDER [GET /api/orders/{tracking_code}]
+
+This method is used to retrieve all the information related to one order, including the list of tracking events.
+
++ Parameters
+    + tracking_code: NX004847162BR (string, required)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "order_code": "SST2022052561915",
+                    "status": "created",
+                    "tracking_code": "NX004847162BR",
+                    "process_code": "x",
+                    "contract_number": "9912550122",
+                    "nationalization_status": "Retorno à origem",
+                    "country_origin": "US",
+                    "data": {
+                        "id": 61915,
+                        "orderNumber": "ORD0001",
+                        "total": "56.90",
+                        "delivery_type": "ST",
+                        "service_type": "DDU",
+                        "stp": 0,
+                        "spos": 1,
+                        "freight_price": "1.40",
+                        "classification": "regular",
+                        "description": "Products",
+                        "currency": "USD",
+                        "width": "15.00",
+                        "height": "15.00",
+                        "length": "20.00",
+                        "url": "",
+                        "weight": "700.00",
+                        "gross_weight": "700.00",
+                        "volume_weight": "751.50",
+                        "considered_weight": "1000.00",
+                        "bag_code": null,
+                        "bag_id": null,
+                        "flight_mawb": null,
+                        "flight_id": null,
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "insurance_price": 0,
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:58:15",
+                        "cost": "0.0000",
+                        "CIF": "58.30",
+                        "exchangeRate": "1.0000"
+                    },
+                    "customer": {
+                        "id": 62353,
+                        "document": "52947139933",
+                        "document_type": null,
+                        "full_name": "Gabriel Martins",
+                        "email": "gabrieloliveiramartins@cuvox.de",
+                        "phone_number": "553154628977",
+                        "created_at": "2022-05-25 23:56:00",
+                        "updated_at": "2022-05-25 23:56:00",
+                        "shippingAddress": {
+                            "address": "Praça Salgado Filho",
+                            "neighborhood": "-",
+                            "complement": "apto 167",
+                            "number": "1308",
+                            "city": "Rio de Janeiro",
+                            "province": "RJ",
+                            "zipcode": "22775120",
+                            "observation": "Praça Salgado Filho, 1308, , apto 167, Rio de Janeiro - RJ, 22775-120"
+                        }
+                    },
+                    "seller": {
+                        "address": {
+                            "address": "Spruce Drive",
+                            "neighborhood": "",
+                            "complement": "",
+                            "number": "2025",
+                            "city": "Beaver Falls",
+                            "province": "PA",
+                            "zipcode": "15010",
+                            "observation": ""
+                        },
+                        "id": 61578,
+                        "code": "ESY2022052561578",
+                        "name": "Phillip Freeman",
+                        "document": "200328451",
+                        "email": "philliplfreeman@client.com",
+                        "phone": "17248917069"
+                    },
+                    "products": [
+                        {
+                            "id": 65934,
+                            "name": "Drum",
+                            "origin_code": "0001",
+                            "hs_code": 851690,
+                            "value": "56.9000",
+                            "qty": 1,
+                            "insurance": false,
+                            "insurance_value": null
+                        }
+                    ],
+                    "history": [
+                        {
+                            "description": "Pedido recebido",
+                            "date": "2022-05-25T23:56:00.000000Z"
+                        }
+                    ],
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+
+### ADD DOCUMENTS [POST /api/orders/addDocuments]
+
+This method is called to send documents when necessary (e.g., medical prescription). In split orders, each order package must contain one document.
+<br>If there is the necessity to send documents according to the operation, then the customer (sender) will be responsible for maintaining adequate infrastructure for storage of their files. 
+<br>The URL provided in this request should point to the hosted document.
+
+
++ Attributes
+    + order_code (tracking_code): NX004847162BR (string, required)
+    + documents
+         + description: Medical Prescription (string, required)
+         + url: http://domain.com/name.extension (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+                "order_code":"NX004847162BR",
+                "documents": [
+                    {
+                        "description": "Medical Prescription",
+                        "url": "http://domain.com/name.extension"
+                    }
+                ]
+            }
+
++ Response 201 (application/json)
+
+
+## Bag [/api/bags]
+
+### CREATE BAG SYNC [POST /api/bags/sync]
+
+This method is called to create a "bag", which is a group of orders that will be shipped together in a bag/box. Once used, a bag code cannot be repeated.
+
+`The field ´unitization_type´ must be provided to inform the type of unitization:`
+- 1 for bag: The limit of weight is 30Kg and the dimension don´t need to be provide.
+- 2 for box: The limit of weighr is 500Kg and the dimenstions MUST be provide.
+
+`Order packages with different last mile delivery types (ST, EX) and/or weight ranges (Up to or Over 3Kg) can never be mixed on the same BAG or BOX. This way there are 4 categories of bags:`
+- A category - Standard, up to 3kg
+- B category - Express, up to 3kg
+- C category - Standard, over 3kg
+- D category - Express, over 3kg
+
++ Attributes
+    + bag_code: BAG0001 (string, required)
+    + seal_barcode: 123456 (string, optional)
+    + unitization_type: 1 (number, required) - 1 for bag or 2 for box
+    + weight: 1450 (number, required) - in grams (min: 0 | max: 500000)
+    + height: 25 (number, optional) - in centimeters (min: 2 | max: 120)
+    + width: 55 (number, optional) - in centimeters (min: 16 | max: 120)
+    + length: 35 (number, optional) - in centimeters (min: 11 | max: 120) 
+    + orders
+        + tracking_number: NX004847162BR (string, required)
+        + tracking_number: NX004847176BR (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+                "bag_code":"BAGSST001",
+                "seal_barcode": "123456",
+                "unitization_type": 1,
+                "weight": 1450, 
+                "height": 25,
+                "width": 55,
+                "length": 35,
+                "orders": [
+                    {"tracking_number" : "NX004847162BR"},
+                    {"tracking_number" : "NX004847176BR"} 
+                ]
+            }
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "id": 4236,
+                    "bag_id": 4236,
+                    "bag_code": "BAGSST001",
+                    "dispatch_number": 68818,
+                    "barcode": "USSLOGBRSAODANX28818001060002",
+                    "weight": 1.45,
+                    "height": 25,
+                    "width": 55,
+                    "length": 35,
+                    "total_orders": 0,
+                    "service_name": "PACKET STANDARD CORREIOS PACKET",
+                    "origin_office": "Sinerlog",
+                    "destination_office": "",
+                    "service_type": "NX (Non-Priority Service)",
+                    "date": "2022-05-26T00:32:23.000000Z",
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+
+
+### CREATE BAG ASYNC [POST /api/bags]
+
+This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong> method, and follows the same structure and rules. The requests to this method may take several minutes to respond. 
+<br><br>This method should only be used as a backup to the <strong>CREATE BAG SYNC</strong> method.
+
++ Attributes
+    + bag_code: BAG0001 (string, required)
+    + seal_barcode: 123456 (string, optional)
+    + unitization_type: 1 (number, required) - 1 for bag or 2 for box
+    + weight: 1500 (number, required) - in grams (min: 0 | max: 500000)
+    + height: 50 (number, optional) - in centimeters (min: 2 | max: 120)
+    + width: 60 (number, optional) - in centimeters (min: 16 | max: 120)
+    + length: 60 (number, optional) - in centimeters (min: 11 | max: 120) 
+    + orders
+        + tracking_number: NX004847162BR (string, required)
+        + tracking_number: NX004847176BR (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+                "bag_code":"BAGSST001",
+                "seal_barcode": "123456",
+                "unitization_type": 1,
+                "weight": 1450, 
+                "height": 25,
+                "width": 55,
+                "length": 35,
+                "orders": [
+                    {"tracking_number" : "NX004847162BR"},
+                    {"tracking_number" : "NX004847176BR"} 
+                ]
+            }
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "id": 4236,
+                    "bag_id": 4236,
+                    "bag_code": "BAGSST001",
+                    "dispatch_number": 68818,
+                    "barcode": "USSLOGBRSAODANX28818001060002",
+                    "weight": 1.45,
+                    "height": 25,
+                    "width": 55,
+                    "length": 35,
+                    "total_orders": 0,
+                    "service_name": "PACKET STANDARD CORREIOS PACKET",
+                    "origin_office": "Sinerlog",
+                    "destination_office": "",
+                    "service_type": "NX (Non-Priority Service)",
+                    "date": "2022-05-26T00:32:23.000000Z",
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+
+
+### GET CN35 [GET /api/bags/cn35/{bag_id}]
+This method returns the URL for downloading the CN35 bag label, in .pdf format.
+
++ Parameters
+    + bag_id: 4236 (number, required)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 200 (application/json)
+
+        {
+            "data": {
+                "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn35/USSLOGBRSAODANX28818001060002_BAGSST001.pdf"
+            }
+        }
+
+
+### GET BAG [GET /api/bags/{bag_id}]
+
+This method is used to return all of the information related to a created bag.
+
++ Parameters
+    + bag_id: 4236 (number, required)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "bag_code": "BAGSST001",
+                    "weight": "1450.00",
+                    "height": "25.00",
+                    "width": "55.00",
+                    "length": "35.00",
+                    "service_name": "PACKET STANDARD CORREIOS PACKET",
+                    "dispatch_number": 68818,
+                    "origin_office": "Sinerlog",
+                    "destination_office": null,
+                    "date": "2022-05-26T00:32:23.000000Z",
+                    "quantity": 2,
+                    "airport_departure": "MIA",
+                    "airport_destination": "GRU",
+                    "service_type": "NX (Non-Priority Service)",
+                    "barcode": "USSLOGBRSAODANX28818001060002"
+                }
+            }
+
+### DELETE BAG [DELETE /api/bags/{bag_id}]
+
+This method is called to delete created bags. A bag can only be deleted if it is not contained within a flight.
+
++ Parameters
+    + bag_id: 4236 (number, required)
+    
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 204 (application/json)
+
+
+## Flights Resources [/api/flights]
+
+### CREATE FLIGHT [POST /api/flights]
+
+This method is called to create a flight, containing all the bags that will be shipped on that flight.
+<br>`etd` is the estimated time of departure.
+<br>`eta`" is the estimated time of arrival.
+
++ Attributes
+    + mawb: M12341234 (string,required)
+    + number: 8101 (number, required)
+    + etd: 2022/05/25 21:00:00 (string, required)
+    + eta: 2022/05/26 09:00:00 (string, required)
+    + airlineCode: AA (string, required)
+    + airlineName: American Airlines (string, required) - table reference
+    + airportDeparture: MIA (string, required) - max.length (3)
+    + airportDestination: GRU (string, required) - max.length (3)
+    + unitizations
+        + bag_id: 4236 (number, required)
+        + bag_id: 4237 (number, required)
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+                "mawb": "M12341234",
+                "number": "8101",
+                "etd": "2022-05-25 21:00:00",
+                "eta": "2022-05-26 09:00:00",
+                "airlineCode": "AA",
+                "airlineName": "American Airlines",
+                "airportDeparture": "MIA",
+                "airportDestination": "GRU",
+                "unitizations": [
+                    {
+                        "bag_id": "4236"
+                    },
+                    {
+                        "bag_id": "4237"
+                    }
+                ]
+            }
+
++ Response 201 (application/json)
+
+            {
+                "data": {
+                    "id": 1766,
+                    "flight_id": 1766,
+                    "mawb": "M12341234",
+                    "number": "8101",
+                    "etd": "2022-05-25T21:00:00.000000Z",
+                    "eta": "2022-05-26T09:00:00.000000Z",
+                    "ata": null,
+                    "pod": null,
+                    "diff": null,
+                    "airline_code": "AA",
+                    "airline_name": "American Airlines",
+                    "airport_departure": "MIA",
+                    "airport_destination": "GRU",
+                    "departure_date": null,
+                    "total_bags": 2,
+                    "total_orders": 4,
+                    "unitizations": [
+                        {
+                            "id": 4236,
+                            "code": "BAGSST001",
+                            "unitized_code": "USSLOGBRSAODANX28818001060002",
+                            "bag_code": "BAGSST001"
+                        },
+                        {
+                            "id": 4237,
+                            "code": "BAGSST002",
+                            "unitized_code": "USSLOGBRSAODANX28819001060002",
+                            "bag_code": "BAGSST002"
+                        }
+                    ],
+                    "tenant": {
+                        "tenant_id": 320,
+                        "code": "exampleapiaryupdate2505",
+                        "name": "example.apiary.update.25.05",
+                        "product": "pre-clearance",
+                        "fundBalance": "0.00",
+                        "tenant_type": "postpaid",
+                        "credit_amount": 0
+                    }
+                }
+            }
+
+
+
+### DELETE FLIGHT [DELETE /api/flights/{flight_id}]
+
+This method is called to delete a created flight.  A flight can only be deleted if the PRE-ALERT method call has not been made for that flight.
+
++ Parameters
+    + flight_id: 1766 (number, required)
+    
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 204 (application/json)
+
+### PRE-ALERT [POST /api/flights/pre-alert]
+
+This method is called to send a confirmation that a flight has taken off. 
+<br>`departuredate` is the actual time of departure.
+
++ Attributes
+    + mawb: M12341234 (string,required)
+    + departuredate: 2022/05/25 23:00:00 (string, required) 
+
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
+    + Body
+
+            {
+                "masterNumbers": [
+                    {
+                        "mawb":"M12341234",
+                        "departuredate": "2022-05-25 23:00:00"
+                    }
+                ]
+            }
+
++ Response 204 (application/json)
