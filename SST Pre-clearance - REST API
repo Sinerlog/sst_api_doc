@@ -746,7 +746,7 @@ This method is called to send documents when necessary (e.g., medical prescripti
 
 
 + Attributes
-    + order_code (tracking_code): NX004847162BR (string, required)
+    + order_code: SST2022052561915 (string, required)
     + documents
          + description: Medical Prescription (string, required)
          + url: http://domain.com/name.extension (string, required)
@@ -760,7 +760,7 @@ This method is called to send documents when necessary (e.g., medical prescripti
     + Body
 
             {
-                "order_code":"NX004847162BR",
+                "order_code":"SST2022052561915",
                 "documents": [
                     {
                         "description": "Medical Prescription",
