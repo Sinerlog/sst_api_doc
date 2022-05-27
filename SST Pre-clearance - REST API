@@ -789,7 +789,7 @@ This method is called to create a "bag", which is a group of orders that will be
 - D category - Express, over 3kg
 
 + Attributes
-    + bag_code: BAG0001 (string, required)
+    + bag_code: TS001 (string, required)
     + seal_barcode: 123456 (string, optional)
     + unitization_type: 1 (number, required) - 1 for bag or 2 for box
     + weight: 1450 (number, required) - in grams (min: 0 | max: 500000)
@@ -797,8 +797,8 @@ This method is called to create a "bag", which is a group of orders that will be
     + width: 55 (number, optional) - in centimeters (min: 16 | max: 120)
     + length: 35 (number, optional) - in centimeters (min: 11 | max: 120) 
     + orders
+        + tracking_number: NX123456789BR (string, required)
         + tracking_number: NX004847162BR (string, required)
-        + tracking_number: NX004847176BR (string, required)
 
 + Request (application/json)
 
@@ -817,8 +817,8 @@ This method is called to create a "bag", which is a group of orders that will be
                 "width": 55,
                 "length": 35,
                 "orders": [
-                    {"tracking_number" : "NX004847162BR"},
-                    {"tracking_number" : "NX004847176BR"} 
+                    {"tracking_number" : "NX004847176BR"},
+                    {"tracking_number" : "NX004847162BR"} 
                 ]
             }
 
@@ -869,7 +869,6 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
     + length: 60 (number, optional) - in centimeters (min: 11 | max: 120) 
     + orders
         + tracking_number: NX004847162BR (string, required)
-        + tracking_number: NX004847176BR (string, required)
 
 + Request (application/json)
 
@@ -888,8 +887,8 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
                 "width": 55,
                 "length": 35,
                 "orders": [
-                    {"tracking_number" : "NX004847162BR"},
-                    {"tracking_number" : "NX004847176BR"} 
+                    {"tracking_number" : "NX004847176BR"},
+                    {"tracking_number" : "NX004847162BR"} 
                 ]
             }
 
