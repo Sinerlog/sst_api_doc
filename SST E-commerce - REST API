@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: https://dev.easymundi.com/
+HOST: https://hml.sst.api.sinerlog.log.br
 
 # SST E-commerce - REST API
 This API documentation</strong> defines and specifies the technical criteria necessary for the integration of a client that wishes to use SST E-commerce API, and it is designed to be used along with the 
@@ -12,7 +12,7 @@ In the flow below, it is demonstrated, in a simplified way, an operational flow 
 ![name](http://sinerlogusa.com/downloads/CompleteFlow.jpg) -->
 
 SST E-commerce API follows REST principles, so the API is stateless and http methods and response codes are used whenever possible.
-<br><br>The base url for requests using the <strong>HOMOLOGATION</strong> (test) environment is: `https://dev.easymundi.com/`
+<br><br>The base url for requests using the <strong>HOMOLOGATION</strong> (test) environment is: `https://hml.sst.api.sinerlog.log.br`
 <br><br>Access and credentials for the <strong>PRODUCTION</strong> environment will be provided once the integration is finished, tested and approved by Sinerlog using the <strong>HOMOLOGATION</strong> environment.
 
 # Description of server success responses
