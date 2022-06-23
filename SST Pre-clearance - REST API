@@ -28,12 +28,9 @@ SST Pre-clearance API follows REST principles, so the API is stateless and http 
 - 422 `Unprocessable Entity` - Request body contains correctly structured, but semantically incorrect json parameters.
 - 500 `Internal server error` - Unexpected error. if this status code is returned, please contact: integration-support@sinerlog.global
 
-# Authentication
-
-Every request must contain the Bearer Token in it's header. 
-
 ## OAuth Token exchange [/oauth/token]
 Exchange credentials for the `access_token`.
+<br>Every subsequent request must contain the Bearer Token in it's header. 
 
 <!--+ `password`-->
 <!--+ [`urn:ietf:params:oauth:grant-type:jwt-bearer`](https://tools.ietf.org/html/draft-jones-oauth-jwt-bearer-03#section-6)-->
