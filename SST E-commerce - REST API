@@ -28,19 +28,16 @@ SST E-commerce API follows REST principles, so the API is stateless and http met
 - 422 `Unprocessable Entity` - Request body contains correctly structured, but semantically incorrect json parameters.
 - 500 `Internal server error` - Unexpected error. if this status code is returned, please contact: integration-support@sinerlog.global
 
-# Authentication
-
-Every request must contain the Bearer Token in it's header. 
-
 ## OAuth Token exchange [/oauth/token]
 Exchange credentials for the `access_token`.
+<br>Every subsequent request must contain the Bearer Token in it's header. 
 
 <!--+ `password`-->
 <!--+ [`urn:ietf:params:oauth:grant-type:jwt-bearer`](https://tools.ietf.org/html/draft-jones-oauth-jwt-bearer-03#section-6)-->
 
 ### Exchange credentials for token [POST /oauth/token]
 
-This method is used to exchange the credentials provided by Sinerlog the Bearer Token needed on the header of every request.
+This method is used to exchange the credentials provided by Sinerlog the Bearer Token.
 <br>`access_token` = Bearer Token
 
 + Request (application/json)
@@ -65,8 +62,7 @@ This method is used to exchange the credentials provided by Sinerlog the Bearer 
                 "refresh_token": "def502007d6fd7f7859df9982bef2ccc055bd93be7ba445cava..."
             }
 
-## Shipping [/api/shipping]
-
+<!--## Shipping [/api/shipping]
 ### ESTIMATE FREIGHT [GET /api/shipping/estimate{?value,weight,height,width,length,classification,deliveryType,deliveryTax,province,currency,zipcode}]
 
 This method is used to estimate freight price and taxes in cart or checkout. 
@@ -116,7 +112,7 @@ This method is used to estimate freight price and taxes in cart or checkout.
                 "insurance": "0.00",
                 "importationTax": "0.00",
                 "icmsTax": "0.00"
-            }
+            }-->
 
 ## Order [/api/orders]
 
