@@ -66,18 +66,20 @@ This method is used to exchange the credentials provided by Sinerlog the Bearer 
 
 ### CREATE ORDER [POST /api/orders]
 
-This method is used to create a new order (aka parcel). The information will be validated according to the parameters allowed for each field.
+This method is used to create a new order (aka parcel/package). The information will be validated according to the parameters allowed for each field.
 
-Special attention is needed on the following fields:
+Special attention is needed on the following attributes:
 - `Shipping Adress Zip Code`: It will be verified if the ZIP Code is valid in Brazil.
-- `CustomerDocument`: It will be verified if the document is valid in Brazil.
-- `Length`, `Height`, `Wight` : The sum of the measurements of these fields may not exceed 200 cm.
-- `DeliveryType`: `ST` for Standard Modal Last Mile, `EX` for Express Modal Last Mile
-- `DeliveryTax`: `1` for DDP or `2` for DDU.
+- `Customer Document`: It will be verified if the recipient's document is valid in Brazil.
+- `Length`, `Height`, `Width` : The sum of the measurements of these fields may not exceed 200 cm.
+- `Delivery Type`: `ST` for Standard Modal Last Mile, `EX` for Express Modal Last Mile
+- `Delivery Tax`: `1` for DDP (delivery duty paid) or `2` for DDU (delivery duty unpaid).
+- `Nationalization Status Code`: This defines how the order will be treated in case it fails customs process. `1` for "Return to origin" or `2` for "Set as abandonment". `1` is default.
+- `Insurance`: `true` to enable or `false` to disable insurance. Selectable by product inside the order. Disabled is standard.
 
 + Attributes
     + description: Musical Instrument (string, required) - max.lenght (50)
-    + orderNumber: ORD0001 (string, required) - Can't be reused
+    + orderNumber: ORD0006 (string, required) - Can't be reused
     + externalId: External Tracking Number (string, optional)
     + weight: 700 (number, required) - in grams (min: 1 | max: 30000)
     + height: 15 (number, required) - in centimeters (min: 1 | max: 100)
@@ -86,9 +88,16 @@ Special attention is needed on the following fields:
     + classification: regular (enum, required)
      + Members
         + regular
+    + nationalization_status_code: 1 (enum) - 1 for "Return to origin" or 2 for "Set as abandonment". 1 is default.
+     + Members
+        + 1
+        + 2
     + totalAmount: 56.90 (number, required) - Max: $3,000.00 or equivalent in BRL or EUR
     + currency: USD (string, required) - USD, BRL or EUR
-    + deliveryType: ST (string, required) - ST or EX
+    + deliveryType: ST (enum, required) - ST or EX
+     + Members
+        + ST
+        + EX
     + deliveryTax: 2 (number, required) - 1 for DDP or 2 for DDU
     + seller
         + name: Phillip Freeman (string, required) - maxlength (70)
@@ -116,13 +125,15 @@ Special attention is needed on the following fields:
         + city: Rio de Janeiro (string, required) - maxlength (100)
         + province: RJ (string, required) - maxlength (2)
         + zipcode: 22775-120 (string, required) - maxlength (9)
-    + products[]
-        + code: "0001" (string, required)
-        + sh_code: 851690 (number, required)
-        + name: Drum (string, required)  - maxlength (200)
-        + value: 56.90 (number, required) - (min: $0.01 | max: $3,000.00)
-        + qty: 1 (string, required)
-        + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
+    + products (array)
+         + (object)
+            + code: 0001 (string, required)
+            + sh_code: 851690 (number, required)
+            + name: Drum (string, required)  - maxlength (200)
+            + value: 56.90 (string, required) - (min: $0.01 | max: $3,000.00)
+            + qty: 1 (string, required)
+            + insurance: true (boolean, optional) - Selectable by product inside the order, false is default
+            + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
 
 + Request (application/json)
 
@@ -134,13 +145,14 @@ Special attention is needed on the following fields:
 
             {
               "description": "Products",
-              "orderNumber": "ORD0001",
+              "orderNumber": "ORD0006",
               "externalId": "ExternalTrackingNumber",
               "weight": 700,
               "height": 15,
               "width": 15,
               "length": 20,
               "classification": "regular",
+              "nationalization_status_code":"1",
               "totalAmount": "56.90",
               "currency": "USD",
               "deliveryType": "ST",
@@ -182,37 +194,41 @@ Special attention is needed on the following fields:
                   "name": "Drum",
                   "value": "56.90",
                   "qty": "1",
+                  "insurance":true,
                   "photoBase64": "/9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9..."
                 }
               ]
             }
-            
+
 + Response 201 (application/json)
 
             {
                 "data": {
-                    "order_code": "SST2022052561915",
+                    "order_code": "SST2022072663387",
                     "status": "created",
-                    "tracking_code": "NX004847162BR",
+                    "tracking_code": "NX006124309BR",
+                    "hawb": null,
                     "process_code": "x",
                     "contract_number": "9912550122",
                     "nationalization_status": "Retorno à origem",
+                    "nationalization_status_code": "1",
+                    "logistic_modality": "postal",
                     "country_origin": "US",
                     "data": {
-                        "id": 61915,
-                        "orderNumber": "ORD0001",
+                        "id": 63387,
+                        "orderNumber": "ORD0006",
                         "total": "56.90",
                         "delivery_type": "ST",
                         "service_type": "DDU",
                         "stp": false,
-                        "spos": 0,
+                        "spos": 1,
                         "freight_price": "1.40",
                         "classification": "regular",
                         "description": "Products",
                         "currency": "USD",
-                        "width": 15,
-                        "height": 15,
-                        "length": 20,
+                        "width": "15",
+                        "height": "15",
+                        "length": "20",
                         "url": "",
                         "weight": "700.00",
                         "gross_weight": "700.00",
@@ -223,22 +239,22 @@ Special attention is needed on the following fields:
                         "flight_mawb": null,
                         "flight_id": null,
                         "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
-                        "insurance_price": 0,
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:56:00",
+                        "insurance_price": 0.3414,
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:48:12",
                         "cost": "0.0000",
-                        "CIF": 58.3,
+                        "CIF": 58.64,
                         "exchangeRate": 1
                     },
                     "customer": {
-                        "id": 62353,
+                        "id": 63872,
                         "document": "52947139933",
                         "document_type": null,
                         "full_name": "Gabriel Martins",
                         "email": "gabrieloliveiramartins@cuvox.de",
                         "phone_number": "553154628977",
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:56:00",
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:48:11",
                         "shippingAddress": {
                             "address": "Praça Salgado Filho",
                             "neighborhood": "",
@@ -261,8 +277,8 @@ Special attention is needed on the following fields:
                             "zipcode": "15010",
                             "observation": ""
                         },
-                        "id": 61578,
-                        "code": "ESY2022052561578",
+                        "id": 63091,
+                        "code": "ESY2022072663091",
                         "name": "Phillip Freeman",
                         "document": "200328451",
                         "email": "philliplfreeman@client.com",
@@ -270,20 +286,20 @@ Special attention is needed on the following fields:
                     },
                     "products": [
                         {
-                            "id": 65934,
+                            "id": 67457,
                             "name": "Drum",
                             "origin_code": "0001",
                             "hs_code": 851690,
                             "value": "56.9000",
                             "qty": 1,
-                            "insurance": false,
-                            "insurance_value": null
+                            "insurance": true,
+                            "insurance_value": "0.3414"
                         }
                     ],
                     "history": [
                         {
                             "description": "Pedido recebido",
-                            "date": "2022-05-25T23:56:00.000000Z"
+                            "date": "2022-07-26T11:48:11.000000Z"
                         }
                     ],
                     "tenant": {
@@ -291,22 +307,31 @@ Special attention is needed on the following fields:
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "100000.00",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
+
 ### UPDATE ORDER [PUT /api/orders/{tracking_code}]
 
-This method is used for update created order.
+This method is used to update a created order.
 
 + Parameters
-    + tracking_code: NX004847162BR (string, required)
+    + tracking_code: NX006124309BR (string, required)
 
 + Attributes
     + description: Musical Instrument (string, required) - max.lenght (50)
-    + orderNumber: ORD0001 (string, required) - Can´t be reused
+    + orderNumber: ORD0006 (string, required) - Can´t be reused
     + externalId: External Tracking Number (string, optional)
     + weight: 700 (number, required) - in grams (min: 1 | max: 30000)
     + height: 15 (number, required) - in centimeters (min: 1 | max: 100)
@@ -315,9 +340,16 @@ This method is used for update created order.
     + classification: regular (enum, required)
      + Members
         + regular
+    + nationalization_status_code: 1 (enum) - 1 for "Return to origin" or 2 for "Set as abandonment"
+     + Members
+        + 1
+        + 2    
     + totalAmount: 56.90 (number, required) - Max: $3,000.00 or equivalent in BRL or EUR
     + currency: USD (string, required) - USD, BRL or EUR
-    + deliveryType: ST (string, required) - ST or EX
+    + deliveryType: ST (enum, required) - ST or EX
+     + Members
+        + ST
+        + EX
     + deliveryTax: 2 (number, required) - 1 for DDP or 2 for DDU
     + seller
         + name: Phillip Freeman (string, required) - maxlength (70)
@@ -345,13 +377,15 @@ This method is used for update created order.
         + city: Rio de Janeiro (string, required) - maxlength (100)
         + province: RJ (string, required) - maxlength (2)
         + zipcode: 22775-120 (string, required) - maxlength (9)
-    + products[]
-        + code: "0001" (string, required)
-        + sh_code: 851690 (number, required)
-        + name: Drum (string, required)  - maxlength (200)
-        + value: 56.90 (number, required) - (min: $0.01 | max: $3,000.00)
-        + qty: 1 (string, required)
-        + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
+    + products (array)
+         + (object)
+            + code: 0001 (string, required)
+            + sh_code: 851690 (number, required)
+            + name: Drum (string, required)  - maxlength (200)
+            + value: 56.90 (string, required) - (min: $0.01 | max: $3,000.00)
+            + qty: 1 (string, required)
+            + insurance: true (boolean, optional) - Selectable by product inside the order, false is default
+            + photoBase64: /9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9... (string, optional)
 
 + Request (application/json)
 
@@ -363,13 +397,14 @@ This method is used for update created order.
 
             {
               "description": "Products",
-              "orderNumber": "ORD0001",
+              "orderNumber": "ORD0006",
               "externalId": "ExternalTrackingNumber",
               "weight": 700,
               "height": 15,
               "width": 15,
               "length": 20,
               "classification": "regular",
+              "nationalization_status_code":"1",
               "totalAmount": "56.90",
               "currency": "USD",
               "deliveryType": "ST",
@@ -411,25 +446,29 @@ This method is used for update created order.
                   "name": "Drum",
                   "value": "56.90",
                   "qty": "1",
+                  "insurance":true,
                   "photoBase64": "/9j/4Q1TRXhpZgAATU0AKgAAAAgADAEAAAMAAAABA9..."
                 }
               ]
             }
-            
+
 + Response 201 (application/json)
 
             {
                 "data": {
-                    "order_code": "SST2022052561915",
+                    "order_code": "SST2022072663387",
                     "status": "created",
-                    "tracking_code": "NX004847162BR",
+                    "tracking_code": "NX006124309BR",
+                    "hawb": null,
                     "process_code": "x",
                     "contract_number": "9912550122",
                     "nationalization_status": "Retorno à origem",
+                    "nationalization_status_code": "1",
+                    "logistic_modality": "postal",
                     "country_origin": "US",
                     "data": {
-                        "id": 61915,
-                        "orderNumber": "ORD0001",
+                        "id": 63387,
+                        "orderNumber": "ORD0006",
                         "total": "56.90",
                         "delivery_type": "ST",
                         "service_type": "DDU",
@@ -452,22 +491,22 @@ This method is used for update created order.
                         "flight_mawb": null,
                         "flight_id": null,
                         "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
-                        "insurance_price": 0,
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:58:15",
+                        "insurance_price": 0.3414,
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:55:47",
                         "cost": "0.0000",
-                        "CIF": "58.30",
+                        "CIF": "58.64",
                         "exchangeRate": "1.0000"
                     },
                     "customer": {
-                        "id": 62353,
+                        "id": 63872,
                         "document": "52947139933",
                         "document_type": null,
                         "full_name": "Gabriel Martins",
                         "email": "gabrieloliveiramartins@cuvox.de",
                         "phone_number": "553154628977",
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:56:00",
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:48:11",
                         "shippingAddress": {
                             "address": "Praça Salgado Filho",
                             "neighborhood": "-",
@@ -490,8 +529,8 @@ This method is used for update created order.
                             "zipcode": "15010",
                             "observation": ""
                         },
-                        "id": 61578,
-                        "code": "ESY2022052561578",
+                        "id": 63091,
+                        "code": "ESY2022072663091",
                         "name": "Phillip Freeman",
                         "document": "200328451",
                         "email": "philliplfreeman@client.com",
@@ -499,20 +538,20 @@ This method is used for update created order.
                     },
                     "products": [
                         {
-                            "id": 65934,
+                            "id": 67457,
                             "name": "Drum",
                             "origin_code": "0001",
                             "hs_code": 851690,
                             "value": "56.9000",
                             "qty": 1,
-                            "insurance": false,
-                            "insurance_value": null
+                            "insurance": true,
+                            "insurance_value": "0.3414"
                         }
                     ],
                     "history": [
                         {
                             "description": "Pedido recebido",
-                            "date": "2022-05-25T23:56:00.000000Z"
+                            "date": "2022-07-26T11:48:11.000000Z"
                         }
                     ],
                     "tenant": {
@@ -520,19 +559,26 @@ This method is used for update created order.
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "99999.66",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
-
 
 ### GET CN23 [GET /api/orders/cn23/{tracking_code}]
 This method returns the URL for downloading the CN23 order label, in .pdf format.
 
 + Parameters
-    + tracking_code: NX004847162BR (string, required)
+    + tracking_code: NX006124309BR (string, required)
 
 + Request
 
@@ -544,7 +590,7 @@ This method returns the URL for downloading the CN23 order label, in .pdf format
 
             {
                 "data": {
-                    "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn23/NX004847176BR.pdf"
+                    "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn23/NX006124309BR.pdf"
                 }
             }
 
@@ -557,7 +603,7 @@ This can be used if a client disires to generate it's own CN23 order label templ
 be accessed by calling the <strong>CONSULT ORDER</strong> method.
 
 + Parameters
-    + tracking_code: NX004847162BR (string, optional)
+    + tracking_code: NX006124309BR (string, optional)
 
 + Request
 
@@ -569,17 +615,19 @@ be accessed by calling the <strong>CONSULT ORDER</strong> method.
 
             {
                 "data": {
-                    "tracking_number": "NX004847162BR",
+                    "tracking_number": "NX006124309BR",
+                    "hawb": null,
                     "process_code": "x",
                     "contract_number": "9912550122",
                     "nationalization_status": "Retorno à origem",
+                    "nationalization_status_code": "1",
                     "country_origin": "US",
                     "service_type": "Standard",
                     "return": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
                     "freight_price": "1.40",
-                    "insurance_value": "0.00",
+                    "insurance_value": "0.34",
                     "weight": "700.000",
-                    "total": "58.30",
+                    "total": "58.64",
                     "service": 2,
                     "products": [
                         {
@@ -628,16 +676,19 @@ This method is used to retrieve all the information related to one order, includ
 
             {
                 "data": {
-                    "order_code": "SST2022052561915",
+                    "order_code": "SST2022072663387",
                     "status": "created",
-                    "tracking_code": "NX004847162BR",
+                    "tracking_code": "NX006124309BR",
+                    "hawb": null,
                     "process_code": "x",
                     "contract_number": "9912550122",
                     "nationalization_status": "Retorno à origem",
+                    "nationalization_status_code": "1",
+                    "logistic_modality": "postal",
                     "country_origin": "US",
                     "data": {
-                        "id": 61915,
-                        "orderNumber": "ORD0001",
+                        "id": 63387,
+                        "orderNumber": "ORD0006",
                         "total": "56.90",
                         "delivery_type": "ST",
                         "service_type": "DDU",
@@ -660,22 +711,22 @@ This method is used to retrieve all the information related to one order, includ
                         "flight_mawb": null,
                         "flight_id": null,
                         "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
-                        "insurance_price": 0,
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:58:15",
+                        "insurance_price": 0.3414,
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:55:47",
                         "cost": "0.0000",
-                        "CIF": "58.30",
+                        "CIF": "58.64",
                         "exchangeRate": "1.0000"
                     },
                     "customer": {
-                        "id": 62353,
+                        "id": 63872,
                         "document": "52947139933",
                         "document_type": null,
                         "full_name": "Gabriel Martins",
                         "email": "gabrieloliveiramartins@cuvox.de",
                         "phone_number": "553154628977",
-                        "created_at": "2022-05-25 23:56:00",
-                        "updated_at": "2022-05-25 23:56:00",
+                        "created_at": "2022-07-26 11:48:11",
+                        "updated_at": "2022-07-26 11:48:11",
                         "shippingAddress": {
                             "address": "Praça Salgado Filho",
                             "neighborhood": "-",
@@ -698,8 +749,8 @@ This method is used to retrieve all the information related to one order, includ
                             "zipcode": "15010",
                             "observation": ""
                         },
-                        "id": 61578,
-                        "code": "ESY2022052561578",
+                        "id": 63091,
+                        "code": "ESY2022072663091",
                         "name": "Phillip Freeman",
                         "document": "200328451",
                         "email": "philliplfreeman@client.com",
@@ -707,20 +758,20 @@ This method is used to retrieve all the information related to one order, includ
                     },
                     "products": [
                         {
-                            "id": 65934,
+                            "id": 67457,
                             "name": "Drum",
                             "origin_code": "0001",
                             "hs_code": 851690,
                             "value": "56.9000",
                             "qty": 1,
-                            "insurance": false,
-                            "insurance_value": null
+                            "insurance": true,
+                            "insurance_value": "0.3414"
                         }
                     ],
                     "history": [
                         {
                             "description": "Pedido recebido",
-                            "date": "2022-05-25T23:56:00.000000Z"
+                            "date": "2022-07-26T11:48:11.000000Z"
                         }
                     ],
                     "tenant": {
@@ -728,9 +779,17 @@ This method is used to retrieve all the information related to one order, includ
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "99999.66",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
@@ -743,7 +802,7 @@ This method is called to send documents when necessary (e.g., medical prescripti
 
 
 + Attributes
-    + order_code: SST2022052561915 (string, required)
+    + order_code: SST2022072663387 (string, required)
     + documents
          + description: Medical Prescription (string, required)
          + url: http://domain.com/name.extension (string, required)
@@ -757,7 +816,7 @@ This method is called to send documents when necessary (e.g., medical prescripti
     + Body
 
             {
-                "order_code":"SST2022052561915",
+                "order_code":"SST2022072663387",
                 "documents": [
                     {
                         "description": "Medical Prescription",
@@ -774,6 +833,7 @@ This method is called to send documents when necessary (e.g., medical prescripti
 ### CREATE BAG SYNC [POST /api/bags/sync]
 
 This method is called to create a "bag", which is a group of orders that will be shipped together in a bag/box. Once used, a bag code cannot be repeated.
+After this method has been used, it is necessary to wait 5 minutes until the bag is processed, before proceeding.
 
 `The field ´unitization_type´ must be provided to inform the type of unitization:`
 - 1 for bag: The limit of weight is 30Kg and the dimension don´t need to be provide.
@@ -786,16 +846,17 @@ This method is called to create a "bag", which is a group of orders that will be
 - D category - Express, over 3kg
 
 + Attributes
-    + bag_code: BAG0001 (string, required)
+    + bag_code: BAGSST006 (string, required)
     + seal_barcode: 123456 (string, optional)
     + unitization_type: 1 (number, required) - 1 for bag or 2 for box
     + weight: 1450 (number, required) - in grams (min: 0 | max: 500000)
     + height: 25 (number, optional) - in centimeters (min: 2 | max: 120)
     + width: 55 (number, optional) - in centimeters (min: 16 | max: 120)
     + length: 35 (number, optional) - in centimeters (min: 11 | max: 120) 
-    + orders
-        + tracking_number: NX004847162BR (string, required)
-        + tracking_number: NX004847176BR (string, required)
+    + orders(array)
+        + (object)
+            + tracking_number: NX006124309BR (string, required)
+            + tracking_number: NX006124326BR (string, required)
 
 + Request (application/json)
 
@@ -806,16 +867,20 @@ This method is called to create a "bag", which is a group of orders that will be
     + Body
 
             {
-                "bag_code":"BAGSST001",
+                "bag_code": "BAGSST006",
                 "seal_barcode": "123456",
                 "unitization_type": 1,
-                "weight": 1450, 
+                "weight": 1450,
                 "height": 25,
                 "width": 55,
                 "length": 35,
                 "orders": [
-                    {"tracking_number" : "NX004847162BR"},
-                    {"tracking_number" : "NX004847176BR"} 
+                    {
+                        "tracking_number": "NX006124309BR"
+                    },
+                    {
+                        "tracking_number": "NX006124326BR"
+                    }
                 ]
             }
 
@@ -823,11 +888,11 @@ This method is called to create a "bag", which is a group of orders that will be
 
             {
                 "data": {
-                    "id": 4236,
-                    "bag_id": 4236,
-                    "bag_code": "BAGSST001",
-                    "dispatch_number": 68818,
-                    "barcode": "USSLOGBRSAODANX28818001060002",
+                    "id": 4405,
+                    "bag_id": 4405,
+                    "bag_code": "BAGSST006",
+                    "dispatch_number": 68977,
+                    "barcode": "USSLOGBRSAODANX28977001060002",
                     "weight": 1.45,
                     "height": 25,
                     "width": 55,
@@ -837,15 +902,23 @@ This method is called to create a "bag", which is a group of orders that will be
                     "origin_office": "Sinerlog",
                     "destination_office": "",
                     "service_type": "NX (Non-Priority Service)",
-                    "date": "2022-05-26T00:32:23.000000Z",
+                    "date": "2022-07-26T13:14:48.000000Z",
                     "tenant": {
                         "tenant_id": 320,
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "99999.32",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
@@ -857,16 +930,17 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
 <br><br>This method should only be used as a backup to the <strong>CREATE BAG SYNC</strong> method.
 
 + Attributes
-    + bag_code: BAG0001 (string, required)
+    + bag_code: BAGSST006 (string, required)
     + seal_barcode: 123456 (string, optional)
     + unitization_type: 1 (number, required) - 1 for bag or 2 for box
-    + weight: 1500 (number, required) - in grams (min: 0 | max: 500000)
-    + height: 50 (number, optional) - in centimeters (min: 2 | max: 120)
-    + width: 60 (number, optional) - in centimeters (min: 16 | max: 120)
-    + length: 60 (number, optional) - in centimeters (min: 11 | max: 120) 
-    + orders
-        + tracking_number: NX004847162BR (string, required)
-        + tracking_number: NX004847176BR (string, required)
+    + weight: 1450 (number, required) - in grams (min: 0 | max: 500000)
+    + height: 25 (number, optional) - in centimeters (min: 2 | max: 120)
+    + width: 55 (number, optional) - in centimeters (min: 16 | max: 120)
+    + length: 35 (number, optional) - in centimeters (min: 11 | max: 120) 
+    + orders(array)
+        + (object)
+            + tracking_number: NX006124309BR (string, required)
+            + tracking_number: NX006124326BR (string, required)
 
 + Request (application/json)
 
@@ -877,16 +951,20 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
     + Body
 
             {
-                "bag_code":"BAGSST001",
+                "bag_code": "BAGSST006",
                 "seal_barcode": "123456",
                 "unitization_type": 1,
-                "weight": 1450, 
+                "weight": 1450,
                 "height": 25,
                 "width": 55,
                 "length": 35,
                 "orders": [
-                    {"tracking_number" : "NX004847162BR"},
-                    {"tracking_number" : "NX004847176BR"} 
+                    {
+                        "tracking_number": "NX006124309BR"
+                    },
+                    {
+                        "tracking_number": "NX006124326BR"
+                    }
                 ]
             }
 
@@ -894,11 +972,11 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
 
             {
                 "data": {
-                    "id": 4236,
-                    "bag_id": 4236,
-                    "bag_code": "BAGSST001",
-                    "dispatch_number": 68818,
-                    "barcode": "USSLOGBRSAODANX28818001060002",
+                    "id": 4405,
+                    "bag_id": 4405,
+                    "bag_code": "BAGSST006",
+                    "dispatch_number": 68977,
+                    "barcode": "USSLOGBRSAODANX28977001060002",
                     "weight": 1.45,
                     "height": 25,
                     "width": 55,
@@ -908,15 +986,23 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
                     "origin_office": "Sinerlog",
                     "destination_office": "",
                     "service_type": "NX (Non-Priority Service)",
-                    "date": "2022-05-26T00:32:23.000000Z",
+                    "date": "2022-07-26T13:14:48.000000Z",
                     "tenant": {
                         "tenant_id": 320,
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "99999.32",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
@@ -926,29 +1012,7 @@ This method is offered as an alternative to the <strong>CREATE BAG SYNC</strong>
 This method returns the URL for downloading the CN35 bag label, in .pdf format.
 
 + Parameters
-    + bag_id: 4236 (number, required)
-
-+ Request
-
-    + Headers
-
-            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
-
-+ Response 200 (application/json)
-
-        {
-            "data": {
-                "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn35/USSLOGBRSAODANX28818001060002_BAGSST001.pdf"
-            }
-        }
-
-
-### GET BAG [GET /api/bags/{bag_id}]
-
-This method is used to return all of the information related to a created bag.
-
-+ Parameters
-    + bag_id: 4236 (number, required)
+    + bag_id: 4405 (number, required)
 
 + Request
 
@@ -960,21 +1024,43 @@ This method is used to return all of the information related to a created bag.
 
             {
                 "data": {
-                    "bag_code": "BAGSST001",
+                    "file": "https://sinerlogusa-sst.s3.amazonaws.com/labels/cn35/USSLOGBRSAODANX28977001060002_BAGSST006.pdf"
+                }
+            }
+
+
+### GET BAG [GET /api/bags/{bag_id}]
+
+This method is used to return all of the information related to a created bag.
+
++ Parameters
+    + bag_id: 4405 (number, required)
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjA3Yz...
+
++ Response 200 (application/json)
+
+            {
+                "data": {
+                    "bag_code": "BAGSST006",
                     "weight": "1450.00",
                     "height": "25.00",
                     "width": "55.00",
                     "length": "35.00",
                     "service_name": "PACKET STANDARD CORREIOS PACKET",
-                    "dispatch_number": 68818,
+                    "dispatch_number": 68977,
                     "origin_office": "Sinerlog",
                     "destination_office": null,
-                    "date": "2022-05-26T00:32:23.000000Z",
+                    "date": "2022-07-26T13:14:48.000000Z",
                     "quantity": 2,
                     "airport_departure": "MIA",
                     "airport_destination": "GRU",
                     "service_type": "NX (Non-Priority Service)",
-                    "barcode": "USSLOGBRSAODANX28818001060002"
+                    "barcode": "USSLOGBRSAODANX28977001060002"
                 }
             }
 
@@ -983,7 +1069,7 @@ This method is used to return all of the information related to a created bag.
 This method is called to delete created bags. A bag can only be deleted if it is not contained within a flight.
 
 + Parameters
-    + bag_id: 4236 (number, required)
+    + bag_id: 4405 (number, required)
     
 + Request (application/json)
 
@@ -1000,20 +1086,25 @@ This method is called to delete created bags. A bag can only be deleted if it is
 
 This method is called to create a flight, containing all the bags that will be shipped on that flight.
 <br>`etd` is the estimated time of departure.
-<br>`eta`" is the estimated time of arrival.
+<br>`eta` is the estimated time of arrival.
+<br>`Airline name` is the IATA name for the airline
+<br>`Airline code` is the IATA code for the airline
+<br>`Airport departure` is the IATA code for the airport of departure
+<br>`Airport destination` is the IATA code for the airport of destination
 
 + Attributes
-    + mawb: M12341234 (string,required)
-    + number: 8101 (number, required)
-    + etd: 2022/05/25 21:00:00 (string, required)
-    + eta: 2022/05/26 09:00:00 (string, required)
-    + airlineCode: AA (string, required)
-    + airlineName: American Airlines (string, required) - table reference
+    + mawb: M1234123456 (string,required)
+    + number: 1111 (number, required)
+    + etd: 2022-07-26 10:30:00 (string, required)
+    + eta: 2022-07-26 19:30:00 (string, required)
+    + airlineCode: AA (string, required) - max.length (2)
+    + airlineName: American Airlines (string, required)
     + airportDeparture: MIA (string, required) - max.length (3)
     + airportDestination: GRU (string, required) - max.length (3)
-    + unitizations
-        + bag_id: 4236 (number, required)
-        + bag_id: 4237 (number, required)
+    + unitizations (array)
+        + (object)
+            + bag_id: 4405 (string, required)
+            + bag_id: 4406 (string, required)
 
 + Request (application/json)
 
@@ -1024,20 +1115,20 @@ This method is called to create a flight, containing all the bags that will be s
     + Body
 
             {
-                "mawb": "M12341234",
-                "number": "8101",
-                "etd": "2022-05-25 21:00:00",
-                "eta": "2022-05-26 09:00:00",
+                "mawb": "M1234123456",
+                "number": "1111",
+                "etd": "2022-07-26 10:30:00",
+                "eta": "2022-07-26 19:30:00",
                 "airlineCode": "AA",
                 "airlineName": "American Airlines",
                 "airportDeparture": "MIA",
                 "airportDestination": "GRU",
                 "unitizations": [
                     {
-                        "bag_id": "4236"
+                        "bag_id": "4405"
                     },
                     {
-                        "bag_id": "4237"
+                        "bag_id": "4406"
                     }
                 ]
             }
@@ -1046,12 +1137,12 @@ This method is called to create a flight, containing all the bags that will be s
 
             {
                 "data": {
-                    "id": 1766,
-                    "flight_id": 1766,
-                    "mawb": "M12341234",
-                    "number": "8101",
-                    "etd": "2022-05-25T21:00:00.000000Z",
-                    "eta": "2022-05-26T09:00:00.000000Z",
+                    "id": 1878,
+                    "flight_id": 1878,
+                    "mawb": "M1234123456",
+                    "number": "1111",
+                    "etd": "2022-07-26T10:30:00.000000Z",
+                    "eta": "2022-07-26T19:30:00.000000Z",
                     "ata": null,
                     "pod": null,
                     "diff": null,
@@ -1064,16 +1155,22 @@ This method is called to create a flight, containing all the bags that will be s
                     "total_orders": 4,
                     "unitizations": [
                         {
-                            "id": 4236,
-                            "code": "BAGSST001",
-                            "unitized_code": "USSLOGBRSAODANX28818001060002",
-                            "bag_code": "BAGSST001"
+                            "id": 4405,
+                            "code": "BAGSST006",
+                            "unitized_code": "USSLOGBRSAODANX28977001060002",
+                            "bag_code": "BAGSST006",
+                            "logistic_modality": "postal",
+                            "status": "",
+                            "transmission_date": ""
                         },
                         {
-                            "id": 4237,
-                            "code": "BAGSST002",
-                            "unitized_code": "USSLOGBRSAODANX28819001060002",
-                            "bag_code": "BAGSST002"
+                            "id": 4406,
+                            "code": "BAGSST008",
+                            "unitized_code": "USSLOGBRSAODAIX28978001060002",
+                            "bag_code": "BAGSST008",
+                            "logistic_modality": "postal",
+                            "status": "",
+                            "transmission_date": ""
                         }
                     ],
                     "tenant": {
@@ -1081,13 +1178,20 @@ This method is called to create a flight, containing all the bags that will be s
                         "code": "exampleapiaryupdate2505",
                         "name": "example.apiary.update.25.05",
                         "product": "pre-clearance",
-                        "fundBalance": "0.00",
-                        "tenant_type": "postpaid",
+                        "fundBalance": "99998.64",
+                        "tenant_type": "prepaid",
                         "credit_amount": 0
+                    },
+                    "contract": {
+                        "contract_id": 221,
+                        "company_name": "example.apiary.update.25.05",
+                        "return_address": "Rua Kanebo, 175 – Galpão B2 – Distrito Industrial – Jundiaí – SP – CEP 13213-090",
+                        "return_address_zipcode": "13213090",
+                        "return_address_number": "175",
+                        "phone": "1111111111111"
                     }
                 }
             }
-
 
 
 ### DELETE FLIGHT [DELETE /api/flights/{flight_id}]
@@ -1095,7 +1199,7 @@ This method is called to create a flight, containing all the bags that will be s
 This method is called to delete a created flight.  A flight can only be deleted if the PRE-ALERT method call has not been made for that flight.
 
 + Parameters
-    + flight_id: 1766 (number, required)
+    + flight_id: 1878 (number, required)
     
 + Request (application/json)
 
@@ -1111,8 +1215,10 @@ This method is called to send a confirmation that a flight has taken off.
 <br>`departuredate` is the actual time of departure.
 
 + Attributes
-    + mawb: M12341234 (string,required)
-    + departuredate: 2022/05/25 23:00:00 (string, required) 
+    + masterNumbers (array)
+     + (object)
+        + mawb: M1234123456 (string, required)
+        + departuredate: `2022-07-26 10:30:00` (string, required) 
 
 
 + Request (application/json)
@@ -1126,8 +1232,8 @@ This method is called to send a confirmation that a flight has taken off.
             {
                 "masterNumbers": [
                     {
-                        "mawb":"M12341234",
-                        "departuredate": "2022-05-25 23:00:00"
+                        "mawb":"M1234123456",
+                        "departuredate": "2022-07-26 10:30:00"
                     }
                 ]
             }
