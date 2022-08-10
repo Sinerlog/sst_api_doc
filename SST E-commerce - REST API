@@ -3,7 +3,7 @@ HOST: https://dev.easymundi.com
 
 # SST E-commerce - REST API
 This API documentation</strong> defines and specifies the technical criteria necessary for the integration of a client that wishes to use SST E-commerce API, and it is designed to be used along with the 
-<strong>SST E-commerce Manual</strong>, which can be requested at: integration-support@sinerlog.global
+<strong>SST E-commerce Manual</strong>, which can be requested at: `integration-support@sinerlog.global`
 
 <!-- ![name](http://sinerlogusa.com/downloads/LogosSinerlogSST.jpeg) -->
 
@@ -12,8 +12,9 @@ In the flow below, it is demonstrated, in a simplified way, an operational flow 
 ![name](http://sinerlogusa.com/downloads/CompleteFlow.jpg) -->
 
 SST E-commerce API follows REST principles, so the API is stateless and http methods and response codes are used whenever possible.
-<br><br>The base url for requests using the <strong>HOMOLOGATION</strong> (test) environment is: `https://dev.easymundi.com`
-<br><br>Access and credentials for the <strong>PRODUCTION</strong> environment will be provided once the integration is finished, tested and approved by Sinerlog using the <strong>HOMOLOGATION</strong> environment.
+<br><br>The base URL for requests using the <strong>HOMOLOGATION</strong> environment is: `https://dev.easymundi.com`.
+Credentials can be requested at: `integration-support@sinerlog.global`
+<br><br>The base URL for requests using the <strong>PRODUCTION</strong> environment is: `https://api.easymundi.com`. Credentials will be provided once the integration is finished, tested and approved by Sinerlog using the <strong>HOMOLOGATION</strong> environment.
 
 # Description of server success responses
 - 200 `OK` - the request was successful.
@@ -26,7 +27,7 @@ SST E-commerce API follows REST principles, so the API is stateless and http met
 - 404 `Not Found` - Resource was not found.
 - 405 `Method Not Allowed` - Requested method is not supported for resource.
 - 422 `Unprocessable Entity` - Request body contains correctly structured, but semantically incorrect json parameters.
-- 500 `Internal server error` - Unexpected error. if this status code is returned, please contact: integration-support@sinerlog.global
+- 500 `Internal server error` - Unexpected error. if this status code is returned, please contact: `integration-support@sinerlog.global`
 
 ## OAuth Token exchange [/oauth/token]
 Exchange credentials for the `access_token`.
