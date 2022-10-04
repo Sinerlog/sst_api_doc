@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: https://dev.easymundi.com
+HOST: https://api-sst.hml.sinerlog.log.br
 
 # SST E-commerce - REST API
 This API documentation</strong> defines and specifies the technical criteria necessary for the integration of a client that wishes to use SST E-commerce API, and it is designed to be used along with the 
