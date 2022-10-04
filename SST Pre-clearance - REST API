@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: https://dev.easymundi.com
+HOST: https://api-sst.hml.sinerlog.log.br
 
 # SST Pre-clearance - REST API
 This API documentation</strong> defines and specifies the technical criteria necessary for the integration of a client that wishes to use SST Pre-clearance API, and it is designed to be used along with the 
@@ -1251,8 +1251,8 @@ This method is called to delete created bags. A bag can only be deleted if it is
 ### CREATE FLIGHT [POST /api/flights]
 
 This method is called to create a flight, containing all the bags that will be shipped on that flight.
-<br>`etd` is the estimated time of departure.
-<br>`eta` is the estimated time of arrival.
+<br>`etd` is the estimated time of departure (UTC-0).
+<br>`eta` is the estimated time of arrival (UTC-0).
 <br>`Airline name` is the IATA name for the airline
 <br>`Airline code` is the IATA code for the airline
 <br>`Airport departure` is the IATA code for the airport of departure
@@ -1379,7 +1379,7 @@ This method is called to delete a created flight.  A flight can only be deleted 
 ### PRE-ALERT [POST /api/flights/pre-alert]
 
 This method is called to send a confirmation that a flight has taken off. 
-<br>`departuredate` is the actual time of departure.
+<br>`departuredate` is the actual time of departure (UTC-0).
 
 + Attributes
     + masterNumbers (array)
